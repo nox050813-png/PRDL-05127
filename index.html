@@ -1,0 +1,101 @@
+keypad_mapping = {
+    1: ['a', 'b', 'c'],
+    2: ['d', 'e', 'f'],
+    3: ['g', 'h', 'i'],
+    4: ['j', 'k', 'l'],
+    5: ['m', 'n', 'ñ'],
+    6: ['o', 'p', 'q'],
+    7: ['r', 's', 't'],
+    8: ['u', 'v', 'w'],
+    9: ['x', 'y', 'z']
+}
+
+# Tabla de sustitución para remover tildes antes de procesar
+ACCENT_MAP = {
+    'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
+    'ü': 'u'
+}
+
+letter_to_code = {}
+for key_num, letters in keypad_mapping.items():
+    for i, letter in enumerate(letters):
+        letter_to_code[letter] = f"{key_num}{i+1}"
+
+code_to_letter = {code: letter for letter, code in letter_to_code.items()}
+
+def normalize_char(char):
+    """Convierte caracteres acentuados a su forma básica."""
+    char = char.lower()
+    return ACCENT_MAP.get(char, char)
+
+def encode_text(text):
+    encoded_parts = []
+    for raw_char in text:
+        char = normalize_char(raw_char)
+        if char in letter_to_code:
+            encoded_parts.append(letter_to_code[char])
+        elif char == ' ':
+            encoded_parts.append('0')
+        else:
+            encoded_parts.append(char)
+    return ' '.join(encoded_parts)
+
+def decode_text(encoded_string):
+    decoded_chars = []
+    codes = encoded_string.strip().split(' ')
+    for code in codes:
+        if not code:
+            continue
+        if code in code_to_letter:
+            decoded_chars.append(code_to_letter[code])
+        elif code == '0':
+            decoded_chars.append(' ')
+        else:
+            decoded_chars.append(code)
+    return ''.join(decoded_chars)
+
+def validate_numeric_input(encoded_string):
+    codes = encoded_string.strip().split(' ')
+    invalid_codes = []
+    for code in codes:
+        if not code:
+            continue
+        if code not in code_to_letter and code != '0':
+            invalid_codes.append(code)
+    if invalid_codes:
+        print(f"\n⚠️ Advertencia: Los siguientes códigos no son válidos: {', '.join(invalid_codes)}")
+        return False
+    return True
+
+def main():
+    print("=" * 45)
+    print("   CODIFICADOR / DECODIFICADOR DE TECLADO")
+    print("=" * 45)
+    
+    choice = input("¿Qué quieres hacer? (codificar/decodificar): ").strip().lower()
+
+    if choice in ['codificar', 'c', '1']:
+        message_to_encode = input("\nIngresa el mensaje de texto: ")
+        encoded_result = encode_text(message_to_encode)
+        
+        print("\n--- Resultado de Codificación ---")
+        print(f"Mensaje original:  {message_to_encode}")
+        print(f"Mensaje codificado: {encoded_result}")
+
+    elif choice in ['decodificar', 'd', '2']:
+        encoded_input = input("\nIngresa los códigos numéricos (separados por espacios): ")
+        
+        is_valid = validate_numeric_input(encoded_input)
+        decoded_result = decode_text(encoded_input)
+        
+        print("\n--- Resultado de Decodificación ---")
+        print(f"Códigos ingresados: {encoded_input}")
+        print(f"Mensaje obtenido:  {decoded_result}")
+        if not is_valid:
+            print("(Nota: Algunos códigos no reconocidos se mantuvieron intactos)")
+            
+    else:
+        print("\n❌ Opción no válida. Debes elegir 'codificar' o 'decodificar'.")
+
+if __name__ == "__main__":
+    main()
