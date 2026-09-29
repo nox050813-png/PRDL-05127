@@ -1,101 +1,296 @@
-keypad_mapping = {
-    1: ['a', 'b', 'c'],
-    2: ['d', 'e', 'f'],
-    3: ['g', 'h', 'i'],
-    4: ['j', 'k', 'l'],
-    5: ['m', 'n', 'ñ'],
-    6: ['o', 'p', 'q'],
-    7: ['r', 's', 't'],
-    8: ['u', 'v', 'w'],
-    9: ['x', 'y', 'z']
-}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codificador de Teclado Numérico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .keypad-btn {
+            transition: all 0.15s ease;
+        }
+        .keypad-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
 
-# Tabla de sustitución para remover tildes antes de procesar
-ACCENT_MAP = {
-    'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
-    'ü': 'u'
-}
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-950/50 backdrop-blur py-4 px-6 text-center">
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+            <i class="fa-solid fa-calculator mr-2"></i>Codificador T9 / Teclado
+        </h1>
+        <p class="text-xs text-slate-400 mt-1">Convierte texto a códigos de teclado numérico y viceversa</p>
+    </header>
 
-letter_to_code = {}
-for key_num, letters in keypad_mapping.items():
-    for i, letter in enumerate(letters):
-        letter_to_code[letter] = f"{key_num}{i+1}"
-
-code_to_letter = {code: letter for letter, code in letter_to_code.items()}
-
-def normalize_char(char):
-    """Convierte caracteres acentuados a su forma básica."""
-    char = char.lower()
-    return ACCENT_MAP.get(char, char)
-
-def encode_text(text):
-    encoded_parts = []
-    for raw_char in text:
-        char = normalize_char(raw_char)
-        if char in letter_to_code:
-            encoded_parts.append(letter_to_code[char])
-        elif char == ' ':
-            encoded_parts.append('0')
-        else:
-            encoded_parts.append(char)
-    return ' '.join(encoded_parts)
-
-def decode_text(encoded_string):
-    decoded_chars = []
-    codes = encoded_string.strip().split(' ')
-    for code in codes:
-        if not code:
-            continue
-        if code in code_to_letter:
-            decoded_chars.append(code_to_letter[code])
-        elif code == '0':
-            decoded_chars.append(' ')
-        else:
-            decoded_chars.append(code)
-    return ''.join(decoded_chars)
-
-def validate_numeric_input(encoded_string):
-    codes = encoded_string.strip().split(' ')
-    invalid_codes = []
-    for code in codes:
-        if not code:
-            continue
-        if code not in code_to_letter and code != '0':
-            invalid_codes.append(code)
-    if invalid_codes:
-        print(f"\n⚠️ Advertencia: Los siguientes códigos no son válidos: {', '.join(invalid_codes)}")
-        return False
-    return True
-
-def main():
-    print("=" * 45)
-    print("   CODIFICADOR / DECODIFICADOR DE TECLADO")
-    print("=" * 45)
-    
-    choice = input("¿Qué quieres hacer? (codificar/decodificar): ").strip().lower()
-
-    if choice in ['codificar', 'c', '1']:
-        message_to_encode = input("\nIngresa el mensaje de texto: ")
-        encoded_result = encode_text(message_to_encode)
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto w-full p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        print("\n--- Resultado de Codificación ---")
-        print(f"Mensaje original:  {message_to_encode}")
-        print(f"Mensaje codificado: {encoded_result}")
-
-    elif choice in ['decodificar', 'd', '2']:
-        encoded_input = input("\nIngresa los códigos numéricos (separados por espacios): ")
-        
-        is_valid = validate_numeric_input(encoded_input)
-        decoded_result = decode_text(encoded_input)
-        
-        print("\n--- Resultado de Decodificación ---")
-        print(f"Códigos ingresados: {encoded_input}")
-        print(f"Mensaje obtenido:  {decoded_result}")
-        if not is_valid:
-            print("(Nota: Algunos códigos no reconocidos se mantuvieron intactos)")
+        <!-- Left Panel: Form & Actions -->
+        <div class="lg:col-span-7 bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-xl space-y-5">
             
-    else:
-        print("\n❌ Opción no válida. Debes elegir 'codificar' o 'decodificar'.")
+            <!-- Mode Switcher -->
+            <div class="grid grid-cols-2 gap-2 bg-slate-900/80 p-1.5 rounded-xl border border-slate-700/40">
+                <button id="mode-encode" onclick="setMode('encode')" class="py-2 px-4 rounded-lg font-medium text-sm transition-all duration-200 bg-cyan-600 text-white shadow-md">
+                    <i class="fa-solid fa-lock mr-2"></i>Codificar Texto
+                </button>
+                <button id="mode-decode" onclick="setMode('decode')" class="py-2 px-4 rounded-lg font-medium text-sm transition-all duration-200 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-lock-open mr-2"></i>Decodificar Código
+                </button>
+            </div>
 
-if __name__ == "__main__":
-    main()
+            <!-- Input Area -->
+            <div>
+                <label id="input-label" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                    Ingresa el mensaje de texto:
+                </label>
+                <textarea id="user-input" rows="4" oninput="processInput()" 
+                    placeholder="Escribe tu mensaje aquí..."
+                    class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none text-base transition-all"></textarea>
+            </div>
+
+            <!-- Warning / Info Box -->
+            <div id="warning-box" class="hidden bg-amber-500/10 border border-amber-500/30 text-amber-300 p-3 rounded-xl text-xs flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-amber-400 text-base"></i>
+                <span id="warning-text">Se detectaron códigos no válidos. Se mantendrán intactos.</span>
+            </div>
+
+            <!-- Output Area -->
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <label id="output-label" class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                        Resultado:
+                    </label>
+                    <button onclick="copyResult()" class="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 bg-cyan-950/50 hover:bg-cyan-900/50 px-2.5 py-1 rounded-lg border border-cyan-800/40 transition">
+                        <i class="fa-regular fa-copy"></i>
+                        <span id="copy-btn-text">Copiar</span>
+                    </button>
+                </div>
+                <div id="user-output" class="w-full min-h-[100px] bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 text-cyan-400 font-mono text-base break-all select-all flex items-start">
+                    <span class="text-slate-600 italic font-sans text-sm">El resultado aparecerá aquí automáticamente...</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3">
+                <button onclick="clearAll()" class="w-full bg-slate-700/50 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-sm font-medium transition border border-slate-600/40">
+                    <i class="fa-solid fa-trash-can mr-2"></i>Limpiar todo
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Panel: Virtual Keypad Reference -->
+        <div class="lg:col-span-5 bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-xl">
+            <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 text-center flex items-center justify-center gap-2">
+                <i class="fa-solid fa-mobile-screen-button text-cyan-400"></i> Referencia de Teclado
+            </h2>
+
+            <div class="grid grid-cols-3 gap-2.5 max-w-[280px] mx-auto">
+                <!-- Keys 1-9 -->
+                <button onclick="appendCode('1')" class="keypad-btn bg-slate-900 hover:bg-slate-750 border border-slate-700/70 p-3 rounded-xl text-center shadow">
+                    <div class="text-lg font-bold text-slate-200">1</div>
+                    <div class="text-[11px] text-cyan-400 font-mono tracking-wider">a b c</div>
+                </button>
+                <button onclick="appendCode('2')" class="keypad-btn bg-slate-900 hover:bg-slate-750 border border-slate-700/70 p-3 rounded-xl text-center shadow">
+                    <div class="text-lg font-bold text-slate-200">2</div>
+                    <div class="text-[11px] text-cyan-400 font-mono tracking-wider">d e f</div>
+                </button>
+                <button onclick="appendCode('3')" class="keypad-btn bg-slate-900 hover:bg-slate-750 border border-slate-700/70 p-3 rounded-xl text-center shadow">
+                    <div class="text-lg font-bold text-slate-200">3</div>
+                    <div class="text-[11px] text-cyan-400 font-mono tracking-wider">g h i</div>
+                </button>
+                <button onclick="appendCode('4')" class="keypad-btn bg-slate-900 hover:bg-slate-750 border border-slate-700/70 p-3 rounded-xl text-center shadow">
+                    <div class="text-lg font-bold text-slate-200">4</div>
+                    <div class="text-[11px] text-cyan-400 font-mono tracking-wider">j k l</div>
+                </button>
+                <button onclick="appendCode('5')" class="keypad-btn bg-slate-900 hover:bg-slate-750 border border-slate-700/70 p-3 rounded-xl text-center shadow">
+                    <div class="text-lg font-bold text-slate-200">5</div>
+                    <div class="text-[11px] text-cyan-400 font-mono tracking-wider">m n ñ</div>
+                </button>
+                <button onclick="appendCode('6')" class="keypad-btn bg-slate-900 hover:bg-slate-750 border border-slate-700/70 p-3 rounded-xl text-center shadow">
+                    <div class="text-lg font-bold text-slate-200">6</div>
+                    <div class="text-[11px] text-cyan-400 font-mono tracking-wider">o p q</div>
+                </button>
+                <button onclick="appendCode('7')" class="keypad-btn bg-slate-900 hover:bg-slate-750 border border-slate-700/70 p-3 rounded-xl text-center shadow">
+                    <div class="text-lg font-bold text-slate-200">7</div>
+                    <div class="text-[11px] text-cyan-400 font-mono tracking-wider">r s t</div>
+                </button>
+                <button onclick="appendCode('8')" class="keypad-btn bg-slate-900 hover:bg-slate-750 border border-slate-700/70 p-3 rounded-xl text-center shadow">
+                    <div class="text-lg font-bold text-slate-200">8</div>
+                    <div class="text-[11px] text-cyan-400 font-mono tracking-wider">u v w</div>
+                </button>
+                <button onclick="appendCode('9')" class="keypad-btn bg-slate-900 hover:bg-slate-750 border border-slate-700/70 p-3 rounded-xl text-center shadow">
+                    <div class="text-lg font-bold text-slate-200">9</div>
+                    <div class="text-[11px] text-cyan-400 font-mono tracking-wider">x y z</div>
+                </button>
+                
+                <!-- Zero / Space Key -->
+                <button onclick="appendCode('0')" class="keypad-btn col-span-3 bg-slate-900 hover:bg-slate-750 border border-slate-700/70 p-2.5 rounded-xl text-center shadow flex items-center justify-center gap-3">
+                    <span class="text-lg font-bold text-slate-200">0</span>
+                    <span class="text-xs text-cyan-400 font-mono uppercase tracking-wider">[ Espacio ]</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-4 text-center text-xs text-slate-500 border-t border-slate-800/80">
+        Aplicación Web de Cifrado T9 • Funciona 100% en el navegador
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Mapeo del teclado exactamente igual al script de Python
+        const keypadMapping = {
+            1: ['a', 'b', 'c'],
+            2: ['d', 'e', 'f'],
+            3: ['g', 'h', 'i'],
+            4: ['j', 'k', 'l'],
+            5: ['m', 'n', 'ñ'],
+            6: ['o', 'p', 'q'],
+            7: ['r', 's', 't'],
+            8: ['u', 'v', 'w'],
+            9: ['x', 'y', 'z']
+        };
+
+        const accentMap = {
+            'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u'
+        };
+
+        const letterToCode = {};
+        const codeToLetter = {};
+
+        // Inicializar diccionarios
+        for (const [keyNum, letters] of Object.entries(keypadMapping)) {
+            letters.forEach((letter, index) => {
+                const code = `${keyNum}${index + 1}`;
+                letterToCode[letter] = code;
+                codeToLetter[code] = letter;
+            });
+        }
+
+        let currentMode = 'encode'; // 'encode' o 'decode'
+
+        function setMode(mode) {
+            currentMode = mode;
+            const encodeBtn = document.getElementById('mode-encode');
+            const decodeBtn = document.getElementById('mode-decode');
+            const inputLabel = document.getElementById('input-label');
+            const userInput = document.getElementById('user-input');
+
+            if (mode === 'encode') {
+                encodeBtn.className = 'py-2 px-4 rounded-lg font-medium text-sm transition-all duration-200 bg-cyan-600 text-white shadow-md';
+                decodeBtn.className = 'py-2 px-4 rounded-lg font-medium text-sm transition-all duration-200 text-slate-400 hover:text-slate-200';
+                inputLabel.textContent = 'Ingresa el mensaje de texto:';
+                userInput.placeholder = 'Escribe tu mensaje aquí (ej. hola mundo)...';
+            } else {
+                decodeBtn.className = 'py-2 px-4 rounded-lg font-medium text-sm transition-all duration-200 bg-cyan-600 text-white shadow-md';
+                encodeBtn.className = 'py-2 px-4 rounded-lg font-medium text-sm transition-all duration-200 text-slate-400 hover:text-slate-200';
+                inputLabel.textContent = 'Ingresa los códigos numéricos (separados por espacios):';
+                userInput.placeholder = 'Escribe los códigos aquí (ej. 32 61 43 11 0 51 81 52 21 61)...';
+            }
+            processInput();
+        }
+
+        function normalizeChar(char) {
+            const lower = char.toLowerCase();
+            return accentMap[lower] || lower;
+        }
+
+        function encodeText(text) {
+            const encodedParts = [];
+            for (let char of text) {
+                const normalized = normalizeChar(char);
+                if (letterToCode[normalized]) {
+                    encodedParts.push(letterToCode[normalized]);
+                } else if (normalized === ' ') {
+                    encodedParts.push('0');
+                } else {
+                    encodedParts.push(normalized);
+                }
+            }
+            return encodedParts.join(' ');
+        }
+
+        function decodeText(encodedString) {
+            const decodedChars = [];
+            const codes = encodedString.trim().split(/\s+/);
+            const invalidCodes = [];
+
+            for (let code of codes) {
+                if (!code) continue;
+                if (codeToLetter[code]) {
+                    decodedChars.push(codeToLetter[code]);
+                } else if (code === '0') {
+                    decodedChars.push(' ');
+                } else {
+                    decodedChars.push(code);
+                    invalidCodes.push(code);
+                }
+            }
+
+            const warningBox = document.getElementById('warning-box');
+            if (invalidCodes.length > 0) {
+                warningBox.classList.remove('hidden');
+                document.getElementById('warning-text').textContent = 
+                    `Advertencia: Los siguientes códigos no son válidos: ${invalidCodes.join(', ')}`;
+            } else {
+                warningBox.classList.add('hidden');
+            }
+
+            return decodedChars.join('');
+        }
+
+        function processInput() {
+            const inputVal = document.getElementById('user-input').value;
+            const outputDiv = document.getElementById('user-output');
+
+            if (!inputVal.trim()) {
+                outputDiv.innerHTML = '<span class="text-slate-600 italic font-sans text-sm">El resultado aparecerá aquí automáticamente...</span>';
+                document.getElementById('warning-box').classList.add('hidden');
+                return;
+            }
+
+            if (currentMode === 'encode') {
+                document.getElementById('warning-box').classList.add('hidden');
+                outputDiv.textContent = encodeText(inputVal);
+            } else {
+                outputDiv.textContent = decodeText(inputVal);
+            }
+        }
+
+        function appendCode(digit) {
+            const userInput = document.getElementById('user-input');
+            if (currentMode === 'decode') {
+                userInput.value = (userInput.value + ' ' + digit).trim();
+            } else {
+                userInput.value += digit;
+            }
+            processInput();
+        }
+
+        function clearAll() {
+            document.getElementById('user-input').value = '';
+            document.getElementById('warning-box').classList.add('hidden');
+            processInput();
+        }
+
+        function copyResult() {
+            const outputDiv = document.getElementById('user-output');
+            const textToCopy = outputDiv.textContent;
+
+            if (textToCopy && !textToCopy.includes('El resultado aparecerá aquí')) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const copyText = document.getElementById('copy-btn-text');
+                    copyText.textContent = '¡Copiado!';
+                    setTimeout(() => {
+                        copyText.textContent = 'Copiar';
+                    }, 2000);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
